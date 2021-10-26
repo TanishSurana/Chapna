@@ -1,5 +1,16 @@
 import sys
 import tensorflow as tf
+from sklearn.metrics import confusion_matrix, classification_report
+
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import confusion_matrix
+from matplotlib import pyplot as plt
+import numpy as np
 
 # Use MNIST handwriting dataset
 mnist = tf.keras.datasets.mnist
@@ -51,13 +62,66 @@ model.compile(
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
-model.fit(x_train, y_train, epochs=10)
+
+history = model.fit(x_train, y_train, epochs=5)
 
 # Evaluate neural network performance
 model.evaluate(x_test,  y_test, verbose=2)
+
+
+'''not my code: this if for evaluation which is not included in keras'''
+
+
+# predict probabilities for test set
+yhat_probs = model.predict(x_test, verbose=0)
+# predict crisp classes for test set
+predict_x=model.predict(x_test) 
+yhat_classes=np.argmax(predict_x,axis=1)
+
+
+
+# reduce to 1d array
+yhat_probs = yhat_probs[:, 0]
+#yhat_classes = yhat_classes[:, 0]
+
+print('\n\n',yhat_classes)
+print('\n\n')
+# accuracy: (tp + tn) / (p + n)
+
+
+y_test=np.argmax(y_test, axis=1)
+
+
+accuracy = accuracy_score(y_test, yhat_classes)
+
+precision = precision_score(y_test, yhat_classes, average='macro')
+
+recall = recall_score(y_test, yhat_classes, average='macro')
+
+f1 = f1_score(y_test, yhat_classes, average='macro')
+
+
+print('Accuracy: %f' % accuracy)
+print('Precision: %f' % precision)
+print('Recall: %f' % recall)
+print('F1 score: %f' % f1)
+
+
+print(classification_report(y_test, yhat_classes))
+
+
+plt.plot(history.history['accuracy'])
+# plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'val'], loc='upper left')
+plt.show()
 
 # Save model to file
 if len(sys.argv) == 2:
     filename = sys.argv[1]
     model.save(filename)
     print(f"Model saved to {filename}.")
+
+

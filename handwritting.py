@@ -1,9 +1,18 @@
 import sys
 import tensorflow as tf
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
+
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 df = pd.read_csv('A_Z Handwritten Data.csv').astype('float32')
 
@@ -31,6 +40,10 @@ print(y_train.shape)
 print(y_test.shape)
 
 # Create a convolutional neural network
+
+
+
+
 model = tf.keras.models.Sequential([
 
     # Convolutional layer. Learn 32 filters using a 3x3 kernel
@@ -63,15 +76,58 @@ model = tf.keras.models.Sequential([
 
 # Train neural network
 model.compile(
-    optimizer='adam', # like gradient descent to update the weights, adam is faster
+    optimizer="adam",
     loss="categorical_crossentropy",
-    metrics=[tf.keras.metrics.Accuracy()]
+    metrics=["accuracy"]
 )
-history = model.fit(x_train, y_train, epochs=2)
+
+
+history = model.fit(x_train, y_train, epochs=5)
 
 
 # Evaluate neural network performance
 model.evaluate(x_test,  y_test, verbose=2)
+
+'''not my code: this if for evaluation which is not included in keras'''
+
+
+# predict probabilities for test set
+yhat_probs = model.predict(x_test, verbose=0)
+# predict crisp classes for test set
+predict_x=model.predict(x_test) 
+yhat_classes=np.argmax(predict_x,axis=1)
+
+
+
+# reduce to 1d array
+yhat_probs = yhat_probs[:, 0]
+#yhat_classes = yhat_classes[:, 0]
+
+print('\n\n',yhat_classes)
+print('\n\n')
+# accuracy: (tp + tn) / (p + n)
+
+
+y_test=np.argmax(y_test, axis=1)
+
+
+accuracy = accuracy_score(y_test, yhat_classes)
+
+precision = precision_score(y_test, yhat_classes, average='macro')
+
+recall = recall_score(y_test, yhat_classes, average='macro')
+
+f1 = f1_score(y_test, yhat_classes, average='macro')
+
+
+print('Accuracy: %f' % accuracy)
+print('Precision: %f' % precision)
+print('Recall: %f' % recall)
+print('F1 score: %f' % f1)
+
+
+print(classification_report(y_test, yhat_classes))
+
 
 plt.plot(history.history['accuracy'])
 # plt.plot(history.history['val_accuracy'])
@@ -86,8 +142,6 @@ if len(sys.argv) == 2:
     filename = sys.argv[1]
     model.save(filename)
     print(f"Model saved to {filename}.")
-
-
 
 
 
